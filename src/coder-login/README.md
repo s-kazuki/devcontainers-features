@@ -1,15 +1,13 @@
 
-# Hello, World! (hello)
+# Coder Login Feature (coder-login)
 
-A hello world feature
+Automatically login to Coder on container creation
 
 ## Example Usage
 
 ```json
 "features": {
-    "ghcr.io/devcontainers/feature-starter/hello:1": {
-        "version": "latest"
-    }
+    "ghcr.io/s-kazuki/devcontainers-features/coder-login:1": {}
 }
 ```
 
@@ -17,10 +15,11 @@ A hello world feature
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| greeting | Select a pre-made greeting, or enter your own | string | hey |
+| coderUrl | The URL of your Coder instance | string | - |
+| coderSessionToken | The SESSION TOKEN of your Coder instance | string | - |
 
 
 
 ---
 
-_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/devcontainers/feature-starter/blob/main/src/hello/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
+_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/s-kazuki/devcontainers-features/blob/main/src/coder-login/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
