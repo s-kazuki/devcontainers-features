@@ -15,20 +15,20 @@ Automatically login to Coder on container creation
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| CODER | - | string | - |
-| CODER_URL | The URL of your Coder instance | string | - |
-| CODER_AGENT_URL | - | string | - |
-| CODER_AGENT_AUTH | - | string | - |
-| CODER_AGENT_TOKEN | - | string | - |
-| CODER_SESSION_TOKEN | The SESSION TOKEN of your Coder instance | string | - |
-| CODER_WORKSPACE_ID | - | string | - |
-| CODER_WORKSPACE_NAME | - | string | - |
-| CODER_WORKSPACE_AGENT_NAME | - | string | - |
-| CODER_WORKSPACE_OWNER_NAME | - | string | - |
-| GIT_AUTHOR_NAME | - | string | - |
-| GIT_AUTHOR_EMAIL | - | string | - |
-| GIT_COMMITTER_NAME | - | string | - |
-| GIT_COMMITTER_EMAIL | - | string | - |
+| coder | - | string | - |
+| coderUrl | The URL of your Coder instance | string | - |
+| coderAgentUrl | - | string | - |
+| coderAgentAuth | - | string | - |
+| coderAgentToken | - | string | - |
+| coderSessionToken | The SESSION TOKEN of your Coder instance | string | - |
+| coderWorkspaceId | - | string | - |
+| coderWorkspaceName | - | string | - |
+| coderWorkspaceAgentName | - | string | - |
+| coderWorkspaceOwnerName | - | string | - |
+| gitAuthorName | - | string | - |
+| gitAuthorEmail | - | string | - |
+| gitCommitterName | - | string | - |
+| gitCommitterEmail | - | string | - |
 
 
 
