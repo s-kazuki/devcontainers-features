@@ -1,6 +1,6 @@
 {
     "id": "coder-login",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "name": "Coder Login Feature",
     "description": "Automatically login to Coder on container creation",
     "options": {
