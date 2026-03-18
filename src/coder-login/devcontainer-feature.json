@@ -1,81 +1,260 @@
 {
-    "id": "coder-login",
-    "version": "1.0.1",
-    "name": "Coder Login Feature",
-    "description": "Automatically login to Coder on container creation",
-    "options": {
-        "coder": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "coderUrl": {
-            "type": "string",
-            "description": "The URL of your Coder instance",
-            "default": ""
-        },
-        "coderAgentUrl": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "coderAgentAuth": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "coderAgentToken": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "coderSessionToken": {
-            "type": "string",
-            "description": "The SESSION TOKEN of your Coder instance",
-            "default": ""
-        },
-        "coderWorkspaceId": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "coderWorkspaceName": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "coderWorkspaceAgentName": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "coderWorkspaceOwnerName": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "gitAuthorName": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "gitAuthorEmail": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "gitCommitterName": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        },
-        "gitCommitterEmail": {
-            "type": "string",
-            "description": "",
-            "default": ""
-        }
+  "id": "coder-login",
+  "version": "1.0.2",
+  "name": "Coder Login Feature",
+  "description": "Automatically login to Coder on container creation",
+  "options": {
+    "absProxyBasePath": {
+      "type": "string",
+      "default": "",
+      "description": "The base path to prefix to all absproxy requests"
     },
-    "installsAfter": [
-        "ghcr.io/coder/devcontainer-features/code-server"
-    ]
+    "appName": {
+      "type": "string",
+      "default": "",
+      "description": "The name to use in branding. Will be shown in titlebar and welcome message."
+    },
+    "auth": {
+      "type": "string",
+      "enum": ["password", "none"],
+      "default": "password",
+      "description": "The type of authentication to use. When 'password' is selected, code-server will auto-generate a password. 'none' disables authentication entirely."
+    },
+    "cert": {
+      "type": "string",
+      "default": "",
+      "description": "Path to certificate. A self signed certificate is generated if none is provided."
+    },
+    "certHost": {
+      "type": "string",
+      "default": "",
+      "description": "Hostname to use when generating a self signed certificate."
+    },
+    "certKey": {
+      "type": "string",
+      "default": "",
+      "description": "Path to certificate key when using non-generated cert."
+    },
+    "disableFileDownloads": {
+      "type": "boolean",
+      "default": false,
+      "description": "Disable file downloads from Code. When enabled, users will not be able to download files from the editor."
+    },
+    "disableFileUploads": {
+      "type": "boolean",
+      "default": false,
+      "description": "Disable file uploads to Code. When enabled, users will not be able to upload files to the editor."
+    },
+    "disableGettingStartedOverride": {
+      "type": "boolean",
+      "default": false,
+      "description": "Disable the coder/coder override in the Help: Getting Started page."
+    },
+    "disableProxy": {
+      "type": "boolean",
+      "default": false,
+      "description": "Disable domain and path proxy routes."
+    },
+    "disableTelemetry": {
+      "type": "boolean",
+      "default": false,
+      "description": "Disable telemetry reporting."
+    },
+    "disableUpdateCheck": {
+      "type": "boolean",
+      "default": false,
+      "description": "Disable update check. Without this flag, code-server checks every 6 hours against the latest GitHub release and notifies once a week when updates are available."
+    },
+    "disableWorkspaceTrust": {
+      "type": "boolean",
+      "default": false,
+      "description": "Disable Workspace Trust feature. This only affects the current session."
+    },
+    "enableProposedAPI": {
+      "type": "string",
+      "default": "",
+      "description": "Comma-separated list of VS Code extension IDs to enable proposed API features for."
+    },
+    "extensions": {
+      "type": "string",
+      "default": "",
+      "description": "Comma-separated list of VS Code extensions to install. Format: 'publisher.extension[@version]' (e.g., 'ms-python.python,ms-azuretools.vscode-docker')."
+    },
+    "githubAuthTokenFile": {
+      "type": "string",
+      "default": "",
+      "description": "Path to a file containing your GitHub auth token."
+    },
+    "hashedPasswordFile": {
+      "type": "string",
+      "default": "",
+      "description": "Path to a file containing the hashed password used for authentication. The password should be hashed with argon2 and be in the encoded form. This takes priority over `passwordFile`."
+    },
+    "host": {
+      "type": "string",
+      "default": "127.0.0.1",
+      "description": "The address to bind to for the code-server. Use '0.0.0.0' to listen on all interfaces."
+    },
+    "locale": {
+      "type": "string",
+      "default": "",
+      "description": "Set VS Code display language and language shown on the login page. Format should be an IETF language tag (e.g., 'en', 'fr', 'zh-CN')."
+    },
+    "logFile": {
+      "type": "string",
+      "default": "/tmp/code-server.log",
+      "description": "Path to a file to send stdout and stderr logs to from code-server."
+    },
+    "passwordFile": {
+      "type": "string",
+      "default": "",
+      "description": "Path to a file containing the password used for authentication."
+    },
+    "port": {
+      "type": "string",
+      "default": "8080",
+      "description": "The port to bind to for the code-server."
+    },
+    "proxyDomain": {
+      "type": "string",
+      "default": "",
+      "description": "Domain used for proxying ports."
+    },
+    "socket": {
+      "type": "string",
+      "default": "",
+      "description": "Path to a socket. When specified, host and port will be ignored."
+    },
+    "socketMode": {
+      "type": "string",
+      "default": "",
+      "description": "File mode of the socket when using the socket option."
+    },
+    "trustedOrigins": {
+      "type": "string",
+      "default": "",
+      "description": "Comma-separated list of trusted-origins to disable origin check for. Useful if not able to access reverse proxy configuration."
+    },
+    "verbose": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable verbose logging."
+    },
+    "version": {
+      "type": "string",
+      "default": "",
+      "description": "The version of code-server to install. If empty, installs the latest version."
+    },
+    "welcomeText": {
+      "type": "string",
+      "default": "",
+      "description": "Text to show on login page."
+    },
+    "workspace": {
+      "type": "string",
+      "default": "",
+      "description": "Path to the workspace or folder to open on startup. Can be a directory or a .code-workspace file."
+    },
+    "appOpenIn": {
+      "type": "string",
+      "default": "slim-window",
+      "description": "The way to open the app in Coder. Defaults to 'slim-window'."
+    },
+    "appShare": {
+      "type": "string",
+      "default": "owner",
+      "description": "The group to use for the app in Coder. Defaults to 'owner'."
+    },
+    "appGroup": {
+      "type": "string",
+      "default": "Web Editors",
+      "description": "The group to use for the app in Coder. Defaults to 'Web Editors'."
+    },
+    "coder": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "coderUrl": {
+      "type": "string",
+      "description": "The URL of your Coder instance",
+      "default": ""
+    },
+    "coderAgentUrl": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "coderAgentAuth": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "coderAgentToken": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "coderSessionToken": {
+      "type": "string",
+      "description": "The SESSION TOKEN of your Coder instance",
+      "default": ""
+    },
+    "coderWorkspaceId": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "coderWorkspaceName": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "coderWorkspaceAgentName": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "coderWorkspaceOwnerName": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "gitAuthorName": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "gitAuthorEmail": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "gitCommitterName": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "gitCommitterEmail": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    }
+  },
+  "customizations": {
+    "coder": {
+      "apps": [
+        {
+          "slug": "code-server",
+          "displayName": "code-server",
+          "url": "http://${localEnv:FEATURE_CODE_SERVER_OPTION_HOST:127.0.0.1}:${localEnv:FEATURE_CODE_SERVER_OPTION_PORT:8080}/",
+          "openIn": "${localEnv:FEATURE_CODE_SERVER_OPTION_APPOPENIN:slim-window}",
+          "share": "${localEnv:FEATURE_CODE_SERVER_OPTION_APPSHARE:owner}",
+          "icon": "/icon/code.svg",
+          "group": "${localEnv:FEATURE_CODE_SERVER_OPTION_APPGROUP:Web Editors}"
+        }
+      ]
+    }
+  },
+  "entrypoint": "/usr/local/bin/code-server-entrypoint"
 }
