@@ -4,14 +4,74 @@
     "name": "Coder Login Feature",
     "description": "Automatically login to Coder on container creation",
     "options": {
-        "coderUrl": {
+        "CODER": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "CODER_URL": {
             "type": "string",
             "description": "The URL of your Coder instance",
             "default": ""
         },
-        "coderSessionToken": {
+        "CODER_AGENT_URL": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "CODER_AGENT_AUTH": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "CODER_AGENT_TOKEN": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "CODER_SESSION_TOKEN": {
             "type": "string",
             "description": "The SESSION TOKEN of your Coder instance",
+            "default": ""
+        },
+        "CODER_WORKSPACE_ID": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "CODER_WORKSPACE_NAME": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "CODER_WORKSPACE_AGENT_NAME": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "CODER_WORKSPACE_OWNER_NAME": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "GIT_AUTHOR_NAME": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "GIT_AUTHOR_EMAIL": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "GIT_COMMITTER_NAME": {
+            "type": "string",
+            "description": "",
+            "default": ""
+        },
+        "GIT_COMMITTER_EMAIL": {
+            "type": "string",
+            "description": "",
             "default": ""
         }
     },
@@ -19,7 +79,19 @@
         "ghcr.io/coder/devcontainer-features/code-server"
     ],
     "containerEnv": {
-        "CODER_URL": "${coderUrl}" ,
-        "CODER_SESSION_TOKEN": "${coderSessionToken}" 
+        "CODER": "${CODER}",
+        "CODER_URL": "${CODER_URL}",
+        "CODER_AGENT_URL": "${CODER_AGENT_URL}",
+        "CODER_AGENT_AUTH": "${CODER_AGENT_AUTH}",
+        "CODER_AGENT_TOKEN": "${CODER_AGENT_TOKEN}",
+        "CODER_SESSION_TOKEN": "${CODER_SESSION_TOKEN}",
+        "CODER_WORKSPACE_ID": "${CODER_WORKSPACE_ID}",
+        "CODER_WORKSPACE_NAME": "${CODER_WORKSPACE_NAME}",
+        "CODER_WORKSPACE_AGENT_NAME": "${CODER_WORKSPACE_AGENT_NAME}",
+        "CODER_WORKSPACE_OWNER_NAME": "${CODER_WORKSPACE_OWNER_NAME}",
+        "GIT_AUTHOR_NAME": "${GIT_AUTHOR_NAME}",
+        "GIT_AUTHOR_EMAIL": "${GIT_AUTHOR_EMAIL}",
+        "GIT_COMMITTER_NAME": "${GIT_COMMITTER_NAME}",
+        "GIT_COMMITTER_EMAIL": "${GIT_COMMITTER_EMAIL}"
     }
 }
