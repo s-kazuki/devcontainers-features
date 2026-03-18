@@ -17,7 +17,7 @@
     "auth": {
       "type": "string",
       "enum": ["password", "none"],
-      "default": "password",
+      "default": "none",
       "description": "The type of authentication to use. When 'password' is selected, code-server will auto-generate a password. 'none' disables authentication entirely."
     },
     "cert": {
