@@ -160,5 +160,6 @@ done
 env | grep '^GIT' | while IFS='=' read -r key value; do
   echo "export ${key}='${value}'" >> "$CODER_ENV_PATH"
 done
+echo "export GIT_SSH_COMMAND='coder gitssh --'" >> "$CODER_ENV_PATH"
 
 coder login --url=${CODER_URL} --token=${CODER_SESSION_TOKEN}
