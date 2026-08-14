@@ -162,4 +162,33 @@ env | grep '^GIT' | while IFS='=' read -r key value; do
 done
 echo "export GIT_SSH_COMMAND='coder gitssh --'" >> "$CODER_ENV_PATH"
 
+# /etc/profile.d is only sourced by login shells. VS Code's integrated
+# terminal and most devcontainer exec paths start non-login shells, so
+# they never pick up $CODER_ENV_PATH from there. Source it from the
+# files non-login interactive shells do read, for every shell we might
+# find in the container.
+touch /etc/bash.bashrc
+if ! grep -qF "$CODER_ENV_PATH" /etc/bash.bashrc; then
+    echo ". $CODER_ENV_PATH" >> /etc/bash.bashrc
+fi
+
+if [[ -d /etc/zsh ]]; then
+    touch /etc/zsh/zshenv
+    if ! grep -qF "$CODER_ENV_PATH" /etc/zsh/zshenv; then
+        echo ". $CODER_ENV_PATH" >> /etc/zsh/zshenv
+    fi
+fi
+
+# Also register the same values in /etc/environment for processes that
+# never go through a shell init file at all (e.g. an editor's extension
+# host attaching directly via `docker exec`).
+env | grep -E '^(CODER|GIT)' | while IFS='=' read -r key value; do
+    if ! grep -qF "${key}=" /etc/environment 2>/dev/null; then
+        echo "${key}=\"${value}\"" >> /etc/environment
+    fi
+done
+if ! grep -qF "GIT_SSH_COMMAND=" /etc/environment 2>/dev/null; then
+    echo 'GIT_SSH_COMMAND="coder gitssh --"' >> /etc/environment
+fi
+
 coder login --url=${CODER_URL} --token=${CODER_SESSION_TOKEN}
