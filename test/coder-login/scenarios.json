@@ -1,0 +1,9 @@
+{
+  "remote-user-node": {
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+    "remoteUser": "node",
+    "features": {
+      "coder-login": {}
+    }
+  }
+}
