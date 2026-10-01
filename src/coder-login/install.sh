@@ -144,9 +144,13 @@ chmod +x /usr/local/bin/code-server-entrypoint
 
 ##########
 
+# Generating the env file below does not need the Coder CLI: the references to
+# it in $CODER_ENV_PATH are resolved when a shell starts, not now. Only the
+# `coder login` branch at the end of this script actually invokes it, so the
+# hard error lives there instead of here. Warn, so a feature ordering mistake
+# is still visible in the build log.
 if ! command -v coder >/dev/null 2>&1; then
-    echo "Coder CLI could not be found. Please ensure it is installed by another feature."
-    exit 1
+    echo "coder-login: Coder CLI not found on PATH at install time." >&2
 fi
 
 CODER_ENV_PATH=/etc/profile.d/coder-env.sh
@@ -237,4 +241,28 @@ done
 
 # `coder login --token` does not persist the token it is given: it uses it
 # once to mint a fresh session key and stores that instead.
-coder login --url="$CODER_URL" --token="$CODER_SESSION_TOKEN"
+#
+# $CODER_CONFIG_DIR defaults to ~/.config/coderv2, which resolves against
+# root's home during feature install. The remote user then cannot read the
+# session and every `coder` invocation reports "signed out". Point the config
+# dir at the remote user's home and hand ownership over.
+#
+# An empty _REMOTE_USER_HOME would make _CODER_CFG /.config/coderv2 and point
+# the chown -R below at the root of the filesystem.
+: "${_REMOTE_USER_HOME:?coder-login: _REMOTE_USER_HOME is not set}"
+_CODER_CFG="${_REMOTE_USER_HOME}/.config/coderv2"
+mkdir -p "$_CODER_CFG"
+chown -R "${_REMOTE_USER}:$(id -gn "$_REMOTE_USER")" "${_REMOTE_USER_HOME}/.config"
+chmod 700 "$_CODER_CFG"
+
+if [[ -n "${CODER_URL:-}" && -n "${CODER_SESSION_TOKEN:-}" ]]; then
+    command -v coder >/dev/null 2>&1 || {
+        echo "coder-login: credentials were provided but the Coder CLI is missing." >&2
+        exit 1
+    }
+    CODER_CONFIG_DIR="$_CODER_CFG" \
+        coder login --url="$CODER_URL" --token="$CODER_SESSION_TOKEN" --use-keyring=false
+    chown -R "${_REMOTE_USER}:$(id -gn "$_REMOTE_USER")" "$_CODER_CFG"
+else
+    echo "coder-login: CODER_URL / CODER_SESSION_TOKEN not set; skipping 'coder login'." >&2
+fi
