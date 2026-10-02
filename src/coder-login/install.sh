@@ -1,6 +1,47 @@
 #!/usr/bin/env bash
 set -e
 
+# Dev container tooling does not always hand us a login name here. With a
+# docker-compose service that pins `user: "1000:1000"`, _REMOTE_USER arrives as
+# a "uid:gid" pair, and a bare numeric uid is possible too. `id`, `su` and
+# `chown` do not accept those interchangeably, so normalise once:
+#   _REMOTE_USER_OWNER - a "user:group" spec chown understands
+#   _REMOTE_USER_NAME  - a login name for su, empty when there is no passwd entry
+#   _REMOTE_USER_UID   - the numeric uid, for comparing against `id -u`
+: "${_REMOTE_USER:?coder-login: _REMOTE_USER is not set}"
+
+_REMOTE_USER_ID="${_REMOTE_USER%%:*}"
+_REMOTE_GROUP_ID=""
+if [[ "$_REMOTE_USER" == *:* ]]; then
+    _REMOTE_GROUP_ID="${_REMOTE_USER##*:}"
+fi
+
+_REMOTE_USER_NAME=""
+_REMOTE_USER_UID="$_REMOTE_USER_ID"
+if _remote_user_passwd="$(getent passwd "$_REMOTE_USER_ID" 2>/dev/null)"; then
+    IFS=':' read -r _remote_name _ _remote_uid _remote_gid _ <<<"$_remote_user_passwd"
+    _REMOTE_USER_NAME="$_remote_name"
+    _REMOTE_USER_UID="$_remote_uid"
+    if [[ -z "$_REMOTE_GROUP_ID" ]]; then
+        _REMOTE_GROUP_ID="$_remote_gid"
+    fi
+    unset _remote_name _remote_uid _remote_gid
+fi
+
+# Without a group, chown leaves the existing group in place, which is the
+# right fallback for a uid that has no passwd entry at all.
+_REMOTE_USER_OWNER="${_REMOTE_USER_ID}${_REMOTE_GROUP_ID:+:${_REMOTE_GROUP_ID}}"
+
+# su only takes a name. Anything that needs to run as the remote user has to
+# fail loudly rather than silently run as root.
+run_as_remote_user() {
+    if [[ -z "$_REMOTE_USER_NAME" ]]; then
+        echo "coder-login: no passwd entry for uid '$_REMOTE_USER_ID'; cannot run commands as the remote user." >&2
+        return 1
+    fi
+    su "$_REMOTE_USER_NAME" -c "$1"
+}
+
 CODE_SERVER_INSTALL_ARGS=""
 
 if [[ -n $VERSION ]]; then
@@ -14,7 +55,7 @@ if [[ -n "$EXTENSIONS" ]]; then
 
     for extension in "${extensions[@]}"
     do
-        if ! su "$_REMOTE_USER" -c "code-server --install-extension '$extension'"; then
+        if ! run_as_remote_user "code-server --install-extension '$extension'"; then
             echo "ERROR: Failed to install extension '$extension' as user '$_REMOTE_USER'" >&2
             exit 1
         fi
@@ -119,8 +160,8 @@ cat > /usr/local/bin/code-server-entrypoint <<EOF
 #!/usr/bin/env bash
 set -e
 
-if [[ \$(whoami) != "$_REMOTE_USER" ]]; then
-	exec su $_REMOTE_USER -c /usr/local/bin/code-server-entrypoint
+if [[ \$(id -u) != "$_REMOTE_USER_UID" ]]; then
+	exec su ${_REMOTE_USER_NAME:-$_REMOTE_USER} -c /usr/local/bin/code-server-entrypoint
 fi
 
 $(declare -p FLAGS)
@@ -252,7 +293,7 @@ done
 : "${_REMOTE_USER_HOME:?coder-login: _REMOTE_USER_HOME is not set}"
 _CODER_CFG="${_REMOTE_USER_HOME}/.config/coderv2"
 mkdir -p "$_CODER_CFG"
-chown -R "${_REMOTE_USER}:$(id -gn "$_REMOTE_USER")" "${_REMOTE_USER_HOME}/.config"
+chown -R "$_REMOTE_USER_OWNER" "${_REMOTE_USER_HOME}/.config"
 chmod 700 "$_CODER_CFG"
 
 if [[ -n "${CODER_URL:-}" && -n "${CODER_SESSION_TOKEN:-}" ]]; then
@@ -262,7 +303,7 @@ if [[ -n "${CODER_URL:-}" && -n "${CODER_SESSION_TOKEN:-}" ]]; then
     }
     CODER_CONFIG_DIR="$_CODER_CFG" \
         coder login --url="$CODER_URL" --token="$CODER_SESSION_TOKEN" --use-keyring=false
-    chown -R "${_REMOTE_USER}:$(id -gn "$_REMOTE_USER")" "$_CODER_CFG"
+    chown -R "$_REMOTE_USER_OWNER" "$_CODER_CFG"
 else
     echo "coder-login: CODER_URL / CODER_SESSION_TOKEN not set; skipping 'coder login'." >&2
 fi
