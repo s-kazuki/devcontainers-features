@@ -5,5 +5,12 @@
     "features": {
       "coder-login": {}
     }
+  },
+  "remote-user-uid-gid": {
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+    "remoteUser": "1000:1000",
+    "features": {
+      "coder-login": {}
+    }
   }
 }
