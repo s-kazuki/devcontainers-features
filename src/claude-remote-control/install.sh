@@ -48,7 +48,8 @@ fi
 
 # Docker seeds an empty named volume from the image, ownership included, so
 # creating the directory here is what makes the volume writable by the remote
-# user on first mount.
+# user on first mount. The uid set here is not final, though: entrypoint.sh
+# re-owns it at container start.
 mkdir -p "$CLAUDE_CONFIG_DIR"
 chown "$_REMOTE_USER_OWNER" "$CLAUDE_CONFIG_DIR"
 chmod 700 "$CLAUDE_CONFIG_DIR"
@@ -72,7 +73,10 @@ mkdir -p "$SHARE_DIR"
     printf 'RC_SESSION_NAME=%q\n' "$SESSIONNAME"
     printf 'RC_PERMISSION_MODE=%q\n' "$PERMISSIONMODE"
     printf 'RC_SPAWN=%q\n' "$SPAWN"
+    printf 'RC_REMOTE_USER_NAME=%q\n' "$_REMOTE_USER_NAME"
+    printf 'RC_REMOTE_USER_OWNER=%q\n' "$_REMOTE_USER_OWNER"
 } > "$SHARE_DIR/options.env"
 chmod 0644 "$SHARE_DIR/options.env"
 
 install -m 0755 "$(dirname "$0")/start.sh" "$SHARE_DIR/start.sh"
+install -m 0755 "$(dirname "$0")/entrypoint.sh" "$SHARE_DIR/entrypoint.sh"

@@ -10,6 +10,17 @@ check "config dir belongs to the remote user" bash -c '
   [ "$(stat -c %U /claude-config)" = "$(id -un)" ]
 '
 check "config dir is private" bash -c '[ "$(stat -c %a /claude-config)" = "700" ]'
+# On a host whose uid is not 1000 (GitHub runners are 1001) the CLI remaps
+# node's uid after install, leaving whatever install.sh chowned behind. Hand
+# the volume to a foreign uid and make sure the entrypoint takes it back.
+check "entrypoint re-owns the config dir" bash -c '
+  sudo chown -R 4242:4242 /claude-config &&
+  sudo /usr/local/share/claude-remote-control/entrypoint.sh &&
+  [ "$(stat -c %u /claude-config)" = "$(id -u)" ]
+'
+check "entrypoint execs its arguments" bash -c '
+  [ "$(/usr/local/share/claude-remote-control/entrypoint.sh echo ok)" = ok ]
+'
 check "options honoured" grep -q '^RC_PERMISSION_MODE=acceptEdits$' /usr/local/share/claude-remote-control/options.env
 
 # Without a login there is nothing to start. The script must not fail the

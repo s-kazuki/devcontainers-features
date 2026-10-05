@@ -27,7 +27,7 @@ if [[ -z "$CLAUDE_BIN" ]]; then
 fi
 
 if [[ -n "${CLAUDE_CONFIG_DIR:-}" && ! -w "$CLAUDE_CONFIG_DIR" ]]; then
-    log "$CLAUDE_CONFIG_DIR is not writable by $(id -un); the shared volume was probably created by a different uid. Skipping."
+    log "$CLAUDE_CONFIG_DIR is not writable by $(id -un) and the entrypoint could not re-own it. Skipping."
     exit 0
 fi
 
