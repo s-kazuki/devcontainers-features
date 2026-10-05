@@ -1,0 +1,45 @@
+{
+  "id": "claude-remote-control",
+  "version": "1.0.0",
+  "name": "Claude Code Remote Control",
+  "description": "Start `claude remote-control` in a detached tmux session on container start, so the workspace is reachable from claude.ai/code and the Claude mobile app",
+  "options": {
+    "installClaude": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Claude Code with the native installer when `claude` is not already on PATH."
+    },
+    "sessionName": {
+      "type": "string",
+      "default": "",
+      "description": "Name shown in claude.ai/code. Defaults to the workspace folder name."
+    },
+    "permissionMode": {
+      "type": "string",
+      "enum": ["default", "acceptEdits", "auto", "plan", "dontAsk", "bypassPermissions"],
+      "default": "default",
+      "description": "Permission mode for sessions spawned through Remote Control."
+    },
+    "spawn": {
+      "type": "string",
+      "enum": ["same-dir", "worktree", "session"],
+      "default": "same-dir",
+      "description": "How Remote Control spawns sessions. 'worktree' requires a git repository."
+    }
+  },
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/claude-config"
+  },
+  "mounts": [
+    {
+      "source": "claude-code-config",
+      "target": "/claude-config",
+      "type": "volume"
+    }
+  ],
+  "postStartCommand": "/usr/local/share/claude-remote-control/start.sh",
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils",
+    "ghcr.io/devcontainers/features/node"
+  ]
+}
