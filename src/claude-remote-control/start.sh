@@ -33,12 +33,25 @@ fi
 
 # Remote Control only works with a claude.ai login, not an API key. Without
 # one there is nothing to start; leave a hint instead of a dead tmux pane.
-auth_status="$(timeout 30 "$CLAUDE_BIN" auth status 2>/dev/null || true)"
-if ! grep -q '"loggedIn": *true' <<<"$auth_status"; then
+#
+# In a VS Code dev container `claude auth status` was seen to answer on a
+# terminal but leave nothing in a command substitution, which this script used
+# to read as "not logged in". Read it from a file with stdin closed, and only
+# treat an explicit "loggedIn": false as signed out.
+auth_file="$(mktemp)"
+timeout 15 "$CLAUDE_BIN" auth status </dev/null >"$auth_file" 2>/dev/null
+auth_rc=$?
+auth_status="$(<"$auth_file")"
+rm -f "$auth_file"
+
+if grep -q '"loggedIn": *false' <<<"$auth_status"; then
     log "not logged in. Run 'claude' once in this container to sign in, then restart the container or run $SHARE_DIR/start.sh."
     exit 0
-fi
-if ! grep -q '"authMethod": *"claude.ai"' <<<"$auth_status"; then
+elif ! grep -q '"loggedIn": *true' <<<"$auth_status"; then
+    # Unknown is not the same as signed out. Start anyway: if there really is
+    # no login, the error stays readable in the tmux pane.
+    log "could not read 'claude auth status' (exit $auth_rc); starting anyway."
+elif ! grep -q '"authMethod": *"claude.ai"' <<<"$auth_status"; then
     log "logged in without a claude.ai account; Remote Control needs one. Skipping."
     exit 0
 fi
