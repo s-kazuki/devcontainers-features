@@ -28,4 +28,20 @@ check "options honoured" grep -q '^RC_PERMISSION_MODE=acceptEdits$' /usr/local/s
 check "start without login exits 0" /usr/local/share/claude-remote-control/start.sh
 check "no tmux session without login" bash -c '! tmux has-session -t claude-rc 2>/dev/null'
 
+# In a VS Code dev container `claude auth status` answered on a terminal but
+# came back empty to this script, which then refused to start. An unreadable
+# status must not be taken for "signed out".
+fake=$(mktemp -d)
+cat > "$fake/claude" <<'FAKE'
+#!/bin/bash
+[ "$1 $2" = "auth status" ] && exit 0
+exec sleep 600
+FAKE
+chmod +x "$fake/claude"
+check "empty auth status does not block the start" bash -c "
+  PATH='$fake':\$PATH /usr/local/share/claude-remote-control/start.sh 2>&1 | grep -q 'started in tmux session'
+"
+check "remote control running in tmux" tmux has-session -t claude-rc
+tmux kill-session -t claude-rc 2>/dev/null || true
+
 reportResults

@@ -1,6 +1,6 @@
 {
   "id": "claude-remote-control",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Claude Code Remote Control",
   "description": "Start `claude remote-control` in a detached tmux session on container start, so the workspace is reachable from claude.ai/code and the Claude mobile app",
   "options": {
