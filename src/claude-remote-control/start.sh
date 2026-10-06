@@ -56,7 +56,36 @@ elif ! grep -q '"authMethod": *"claude.ai"' <<<"$auth_status"; then
     exit 0
 fi
 
-name="${RC_SESSION_NAME:-$(basename "$PWD")}"
+# Inside Coder the workspace name says more than the folder name (often just
+# /workspaces/<repo> or /node). Lifecycle commands do not always inherit the
+# CODER_* variables a Coder terminal has, so also look where the coder-login
+# feature finds them: the sub-agent's environment, then /etc/environment.
+coder_workspace_name() {
+    local pid value
+    if [[ -n "${CODER_WORKSPACE_NAME:-}" ]]; then
+        echo "env:$CODER_WORKSPACE_NAME"
+        return
+    fi
+    for pid in $(pgrep -f '/\.coder-agent/coder agent' 2>/dev/null); do
+        value="$(tr '\0' '\n' <"/proc/$pid/environ" 2>/dev/null | sed -n 's/^CODER_WORKSPACE_NAME=//p')"
+        if [[ -n "$value" ]]; then
+            echo "agent:$value"
+            return
+        fi
+    done
+    value="$(sed -n 's/^CODER_WORKSPACE_NAME="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' /etc/environment 2>/dev/null)"
+    if [[ -n "$value" ]]; then
+        echo "/etc/environment:$value"
+    fi
+}
+
+if [[ -n "$RC_SESSION_NAME" ]]; then
+    name="$RC_SESSION_NAME" name_source="option"
+elif found="$(coder_workspace_name)" && [[ -n "$found" ]]; then
+    name="${found#*:}" name_source="Coder workspace (${found%%:*})"
+else
+    name="$(basename "$PWD")" name_source="folder"
+fi
 args=("$CLAUDE_BIN" remote-control --name "$name" --spawn "$RC_SPAWN")
 if [[ "$RC_PERMISSION_MODE" != "default" ]]; then
     args+=(--permission-mode "$RC_PERMISSION_MODE")
@@ -68,4 +97,4 @@ tmux new-session -d -s "$TMUX_SESSION" -c "$PWD" "$(printf '%q ' "${args[@]}")"
 # Keep the pane around if claude exits, so the error stays readable.
 tmux set-option -t "$TMUX_SESSION" remain-on-exit on >/dev/null
 
-log "started in tmux session '$TMUX_SESSION' as '$name' (tmux attach -t $TMUX_SESSION)"
+log "started in tmux session '$TMUX_SESSION' as '$name' from $name_source (tmux attach -t $TMUX_SESSION)"

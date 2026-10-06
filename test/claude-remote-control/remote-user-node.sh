@@ -44,4 +44,37 @@ check "empty auth status does not block the start" bash -c "
 check "remote control running in tmux" tmux has-session -t claude-rc
 tmux kill-session -t claude-rc 2>/dev/null || true
 
+# Session name: the Coder workspace name when one can be found, else the
+# workspace folder name. The stand-in claude above lets start.sh run through.
+started_as() {
+    local out
+    out="$(env "$@" PATH="$fake:$PATH" /usr/local/share/claude-remote-control/start.sh 2>&1)"
+    tmux kill-session -t claude-rc 2>/dev/null || true
+    sed -n "s/.* as '\([^']*\)' from .*/\1/p" <<<"$out"
+}
+export -f started_as
+export fake
+check "outside Coder the folder name is used" bash -c '
+  [ "$(started_as -u CODER_WORKSPACE_NAME)" = "$(basename "$PWD")" ]
+'
+check "CODER_WORKSPACE_NAME is used" bash -c '
+  [ "$(started_as CODER_WORKSPACE_NAME=my-ws)" = my-ws ]
+'
+# Lifecycle commands may lack CODER_* while the Coder sub-agent in the
+# container has them. Stand in for that agent with a process of the same name.
+check "the Coder sub-agent's environment is used" bash -c '
+  sudo mkdir -p /.coder-agent &&
+  printf "#!/bin/bash\nsleep 600\n" | sudo tee /.coder-agent/coder >/dev/null &&
+  sudo chmod +x /.coder-agent/coder &&
+  (CODER_WORKSPACE_NAME=agent-ws setsid /.coder-agent/coder agent >/dev/null 2>&1 &) &&
+  sleep 1 &&
+  name="$(started_as -u CODER_WORKSPACE_NAME)"
+  pkill -f "^/bin/bash /\.coder-agent/coder agent"
+  [ "$name" = agent-ws ]
+'
+check "/etc/environment is used when the variable is missing" bash -c '
+  echo "CODER_WORKSPACE_NAME=\"etc-ws\"" | sudo tee -a /etc/environment >/dev/null &&
+  [ "$(started_as -u CODER_WORKSPACE_NAME)" = etc-ws ]
+'
+
 reportResults
