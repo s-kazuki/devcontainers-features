@@ -18,6 +18,24 @@ check "env file is world readable" bash -c '[ "$(stat -c %a /etc/profile.d/coder
 check "agent token resolved at runtime" grep -q '/proc/' "$CODER_ENV"
 check "GIT_SSH_COMMAND fallback present" grep -q 'gitssh' "$CODER_ENV"
 
+# v1.2.0: git goes through wrappers that resolve the live sub-agent's
+# credentials on every call, so a shell whose environment went stale after a
+# workspace restart still authenticates.
+check "gitssh wrapper installed" test -x /usr/local/bin/coder-gitssh
+check "gitaskpass wrapper installed" test -x /usr/local/bin/coder-gitaskpass
+check "shared resolver installed" test -r /usr/local/lib/coder-login/agent-env.sh
+check "GIT_SSH_COMMAND points at the wrapper" grep -q "GIT_SSH_COMMAND='/usr/local/bin/coder-gitssh --'" "$CODER_ENV"
+
+# Regression test for ID 16916: a stale inherited token must not win over the
+# live sub-agent. Fake a sub-agent with a fresh token and a shell with a stale one.
+check "live sub-agent wins over a stale inherited token" bash -c '
+  env CODER_AGENT_TOKEN=fresh bash -c "exec -a \"/.coder-agent/coder agent\" sleep 30" &
+  sleep 1
+  got=$(env CODER_AGENT_TOKEN=stale sh -c ". /usr/local/lib/coder-login/agent-env.sh; echo \$CODER_AGENT_TOKEN")
+  kill %1 2>/dev/null
+  [ "$got" = fresh ]
+'
+
 # /etc/profile.d is only read by login shells; the feature also has to reach
 # the non-login interactive shells that VS Code and `devcontainer exec` start.
 check "sourced from /etc/bash.bashrc" grep -qF "$CODER_ENV" /etc/bash.bashrc

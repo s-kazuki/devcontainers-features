@@ -216,35 +216,62 @@ CODER_ENV_PATH=/etc/profile.d/coder-env.sh
     done
 } > "$CODER_ENV_PATH"
 
-cat >> "$CODER_ENV_PATH" <<'CODER_AGENT_RESOLVER'
+# Agent credentials rotate on every workspace build (a token is only valid
+# while its build is the latest one), so they are resolved from the running
+# sub-agent rather than baked in. Coder execs the sub-agent inside this
+# container with the current credentials in its environment.
+#
+# v1.2.0: the live sub-agent always wins. v1.1.x kept whatever was already
+# set, but a devcontainer is restarted, not recreated, when the workspace
+# restarts, so `docker exec` shells (VS Code attach included) inherit the
+# token frozen in the container's Config.Env at creation time. "Already set"
+# cannot tell that stale value from a correct one; the live agent can.
+_CODER_LIB=/usr/local/lib/coder-login
+mkdir -p "$_CODER_LIB"
+cat > "$_CODER_LIB/agent-env.sh" <<'CODER_AGENT_ENV'
+# Sourced, POSIX sh. Exports CODER_AGENT_TOKEN / CODER_AGENT_URL from the
+# newest running sub-agent. Leaves the inherited values alone only when no
+# readable sub-agent exists (e.g. outside Coder, or before it has started).
+_coder_pids="$(pgrep -n -f '/\.coder-agent/coder agent' 2>/dev/null) $(pgrep -f '/\.coder-agent/coder agent' 2>/dev/null)"
+for _coder_pid in $_coder_pids; do
+    [ -r "/proc/${_coder_pid}/environ" ] || continue
+    _coder_tok=$(tr '\0' '\n' < "/proc/${_coder_pid}/environ" | sed -n 's/^CODER_AGENT_TOKEN=//p')
+    [ -n "${_coder_tok}" ] || continue
+    _coder_url=$(tr '\0' '\n' < "/proc/${_coder_pid}/environ" | sed -n 's/^CODER_AGENT_URL=//p')
+    export CODER_AGENT_TOKEN="${_coder_tok}"
+    [ -n "${_coder_url}" ] && export CODER_AGENT_URL="${_coder_url}"
+    break
+done
+unset _coder_pids _coder_pid _coder_tok _coder_url
+CODER_AGENT_ENV
+chmod 0644 "$_CODER_LIB/agent-env.sh"
 
-# Agent credentials rotate on every workspace build, so they must be resolved
-# at shell start rather than baked in. Coder execs a sub-agent process inside
-# this container and passes the current credentials to it in its environment;
-# read them back from there. Shells that the sub-agent started already have
-# the right values, so never overwrite what is already set.
-if [ -z "${CODER_AGENT_TOKEN:-}" ]; then
-    for _coder_pid in $(pgrep -f '/\.coder-agent/coder agent' 2>/dev/null); do
-        [ -r "/proc/${_coder_pid}/environ" ] || continue
-        _coder_tok=$(tr '\0' '\n' < "/proc/${_coder_pid}/environ" | sed -n 's/^CODER_AGENT_TOKEN=//p')
-        [ -n "${_coder_tok}" ] || continue
-        _coder_url=$(tr '\0' '\n' < "/proc/${_coder_pid}/environ" | sed -n 's/^CODER_AGENT_URL=//p')
-        export CODER_AGENT_TOKEN="${_coder_tok}"
-        [ -n "${_coder_url}" ] && export CODER_AGENT_URL="${_coder_url}"
-        break
-    done
-    unset _coder_pid _coder_tok _coder_url
+# git calls these on every fetch/push, so credentials are resolved per call
+# and a long-lived shell cannot go stale even after the workspace restarts.
+for _wrapper in gitssh gitaskpass; do
+    cat > "/usr/local/bin/coder-${_wrapper}" <<CODER_WRAPPER
+#!/bin/sh
+. $_CODER_LIB/agent-env.sh
+if [ -x /.coder-agent/coder ]; then
+    exec /.coder-agent/coder ${_wrapper} "\$@"
 fi
+exec coder ${_wrapper} "\$@"
+CODER_WRAPPER
+    chmod 0755 "/usr/local/bin/coder-${_wrapper}"
+done
+unset _wrapper
 
-# The agent sets this to an absolute path when it starts a shell. Only fill in
-# a fallback when nothing has set it yet.
-if [ -z "${GIT_SSH_COMMAND:-}" ]; then
-    if [ -x /.coder-agent/coder ]; then
-        export GIT_SSH_COMMAND='/.coder-agent/coder gitssh --'
-    else
-        export GIT_SSH_COMMAND='coder gitssh --'
-    fi
-fi
+cat >> "$CODER_ENV_PATH" <<CODER_AGENT_RESOLVER
+
+. $_CODER_LIB/agent-env.sh
+
+# Always route git through the wrappers. The value the agent sets points at
+# the right binary but relies on the token in this shell's environment, which
+# is exactly what goes stale.
+export GIT_SSH_COMMAND='/usr/local/bin/coder-gitssh --'
+case "\${GIT_ASKPASS:-}" in
+    ''|*coder*) export GIT_ASKPASS=/usr/local/bin/coder-gitaskpass ;;
+esac
 CODER_AGENT_RESOLVER
 
 chmod 0644 "$CODER_ENV_PATH"
