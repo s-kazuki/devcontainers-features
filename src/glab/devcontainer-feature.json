@@ -1,0 +1,26 @@
+{
+  "id": "glab",
+  "version": "1.0.0",
+  "name": "GitLab CLI (glab)",
+  "description": "Installs a pinned glab and authenticates it from Coder external auth on every call, so no token is ever written to disk.",
+  "options": {
+    "version": {
+      "type": "string",
+      "default": "1.121.0",
+      "description": "glab version to install (x.y.z). glab has no permanent 'latest' download URL, so this must be pinned."
+    },
+    "host": {
+      "type": "string",
+      "default": "gitlab.com",
+      "description": "Default GitLab host (GITLAB_HOST) when the caller has not set one."
+    },
+    "externalAuthId": {
+      "type": "string",
+      "default": "primary-gitlab",
+      "description": "Coder external auth provider ID to take the token from. Empty disables it (then use GITLAB_TOKEN or `glab auth login`)."
+    }
+  },
+  "installsAfter": [
+    "ghcr.io/s-kazuki/devcontainers-features/coder-login"
+  ]
+}
