@@ -16,6 +16,7 @@ jobs:
         features:
           - coder-login
           - claude-remote-control
+          - glab
         baseImage:
           - "mcr.microsoft.com/devcontainers/base:ubuntu"
           - "mcr.microsoft.com/devcontainers/javascript-node:22"
