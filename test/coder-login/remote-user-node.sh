@@ -27,6 +27,7 @@ check "no UUID-shaped secret baked in" bash -c '
   ! grep -qE "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" \
       /etc/profile.d/coder-env.sh /etc/environment /etc/bash.bashrc
 '
-check "agent token resolved at runtime" grep -q '/proc/' /etc/profile.d/coder-env.sh
+check "agent token resolved at runtime" grep -q '/proc/' /usr/local/lib/coder-login/agent-env.sh
+check "env file sources the resolver" grep -qF '/usr/local/lib/coder-login/agent-env.sh' /etc/profile.d/coder-env.sh
 
 reportResults

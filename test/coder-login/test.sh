@@ -15,7 +15,8 @@ check "env file is world readable" bash -c '[ "$(stat -c %a /etc/profile.d/coder
 # Agent credentials rotate on every workspace build, so the feature must
 # resolve them from the running sub-agent at shell start rather than bake a
 # snapshot in. Assert the resolver, not just the absence of the snapshot.
-check "agent token resolved at runtime" grep -q '/proc/' "$CODER_ENV"
+check "agent token resolved at runtime" grep -q '/proc/' /usr/local/lib/coder-login/agent-env.sh
+check "env file sources the resolver" grep -qF '/usr/local/lib/coder-login/agent-env.sh' "$CODER_ENV"
 check "GIT_SSH_COMMAND fallback present" grep -q 'gitssh' "$CODER_ENV"
 
 # v1.2.0: git goes through wrappers that resolve the live sub-agent's
