@@ -1,7 +1,8 @@
 {
   "id": "glab",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "GitLab CLI (glab)",
+  "deprecated": true,
   "description": "Installs a pinned glab and authenticates it from Coder external auth on every call, so no token is ever written to disk.",
   "options": {
     "version": {

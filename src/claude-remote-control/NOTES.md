@@ -1,3 +1,9 @@
+## Deprecated
+
+This feature is superseded and receives no further updates. On REVONEO's Coder, Claude Code Remote Control is now started by the Coder template rather than from inside each project's dev container: see `coder_script.devcontainer_claude_rc` and the `enable_claude_rc` workspace parameter in the `kubernetes-2026` template of [revoneo/_company/coder/manifests](https://gitlab.com/revoneo/_company/coder/manifests). Customer repositories' `devcontainer.json` should not carry company or personal tooling, so remove `claude-remote-control` from them and turn on `enable_claude_rc` in the workspace instead.
+
+Existing `:1` references keep working with the behaviour described below.
+
 ## First run
 
 Remote Control needs a claude.ai login (an API key is not enough), so the very first start only prints a hint:
